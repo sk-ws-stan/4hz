@@ -1,6 +1,4 @@
 #include <FastLED.h>
-
-
 // how fast to move the dots, in frames per second, adjust this to 
 // make the dots move faster or slower
 const unsigned short c_Speed = 100U;
@@ -11,23 +9,27 @@ const unsigned short c_Stripes = 4U;
 const unsigned short c_Saturation = 63U;
 const unsigned short c_Value = 83U;
 const unsigned short c_ButtonOffset = 10U;
+const unsigned int c_BoudRate = 9600U;
+const 
 
 boolean knopfGedryckt[c_Stripes];
 CRGB leds[c_Stripes][c_NumberOfLEDs];
 
 void setup()
 {
+  Serial.begin( c_BoudRate );
   FastLED.addLeds< APA102, 1, 2 >( leds[ 0 ], c_NumberOfLEDs );
   FastLED.addLeds< APA102, 3, 4 >( leds[ 1 ], c_NumberOfLEDs );
   FastLED.addLeds< APA102, 5, 6 >( leds[ 2 ], c_NumberOfLEDs );
   FastLED.addLeds< APA102, 7, 8 >( leds[ 3 ], c_NumberOfLEDs );
 
   // Keep power usage sane (at least while testing)
-//  setMaxPowerInVoltsAndMilliamps(5, 1000);
+  setMaxPowerInVoltsAndMilliamps(5, 1000);
 
   //initialisiren mit null
-//  leds;
-  //kmopf;
+  //leds;
+   
+  //knopf;
 }
 
 void loop()
