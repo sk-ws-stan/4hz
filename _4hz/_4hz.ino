@@ -49,8 +49,12 @@ void loop()
       //wenn von hinten weiss
       if( leds[ i ][ j ] == CRGB( 255, 255, 255 ) )
       {
-        //weiss einen nach vorne (j+1) muss existieren
-        leds[ i ][ j + 1U ] = CRGB( 255, 255, 255 );
+        //last LED -> just ignore
+        if( j != ( c_NumberOfLEDs - 1U ) )
+        {
+          //weiss einen nach vorne (j+1) muss existieren
+          leds[ i ][ j + 1U ] = CRGB( 255, 255, 255 );
+        }
         //fade out
         for( unsigned int fade = 0U; fade < c_FadeTail; fade++ )
         {
@@ -98,11 +102,23 @@ void loop()
       //weissen dot am anfang
       leds[ i ][ 0 ] = CRGB( 255, 255, 255 );
     }
-    else if( currentKnopf == LOW )
+    //losgelassen
+    else if( ( currentKnopf == LOW )  && ( knopfGedryckt[ i ] == true ) )
     {
-      knopfGedryckt[i] = false;
+      knopfGedryckt[ i ] = false;
     }
-    //falls HIGH und gedryckt: ignorieren, da schon alles getan 
+    //falls HIGH und gedryckt: ignorieren, da schon alles getan
+
+    //debug out to serial
+    if( c_WriteToSerial )
+    {
+      Serial.print( leds[ i ][ 0 ] );
+      Serial.print( "\t" );
+      if( i == ( c_Stripes - 1U ) )
+      {
+        Serial.println( "" );
+      }
+    }
   }
   FastLED.show();
 }
