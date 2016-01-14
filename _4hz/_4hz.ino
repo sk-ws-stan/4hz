@@ -8,7 +8,10 @@ const unsigned short c_NumberOfLEDs = 100U;
 const unsigned short c_Stripes = 4U;
 const unsigned short c_Saturation = 63U;
 const unsigned short c_Value = 83U;
+//start pin for buttons
 const unsigned short c_ButtonOffset = 10U;
+//wait delay per iteration
+const unsigned long c_WaitTime = 1L;
 //debug flag
 const boolean c_WriteToSerial = false;
 //button status
@@ -40,69 +43,98 @@ void setup()
 
 void loop()
 { 
-  //jeder steifen
+  //all LED stripes
   for( unsigned int i = 0U; i <= c_Stripes; i++ )
   {
-    //von hinten
+    //seek for white dot from the back
     for( unsigned int j = c_NumberOfLEDs - 1U; j > 0U; j-- )
     {
-      //wenn von hinten weiss
       if( leds[ i ][ j ] == CRGB( 255, 255, 255 ) )
       {
-        //weiss einen nach vorne (j+1) muss existieren
-        leds[ i ][ j + 1U ] = CRGB( 255, 255, 255 );
-        //fade out
-        for( unsigned int fade = 0U; fade < c_FadeTail; fade++ )
+        //last LED -> just ignore
+        if( j != ( c_NumberOfLEDs - 1U ) )
         {
-          //wenn nicht am anfang des strangs
+          //shift white one LED towards the back
+          leds[ i ][ j + 1U ] = CRGB( 255, 255, 255 );
+        }
+        //fade out the colour to black from one after white up to c_FadeTail LEDs behind
+        unsigned int fade = 0U;
+        for( ; fade < c_FadeTail; fade++ )
+        {
+          //if not at start of strip
           if( ( j - 1U ) >= 0U )
           {
             CRGB current = leds[ i ][ j - 1U ];
-            //is schon wieder weiss?
+            //check if another white dot
             if( current == CRGB( 255, 255, 255 ) )
             {
-              //dann nicht mehr faden
+              //stop fading
               break;
             }
-            //um argument verdunkeln - 255 ist max
+            //fade by argument (255 is max)
             current.fadeToBlackBy( ( 255 / c_FadeTail ) * fade );
             leds[ i ][ j ] = current;
           }
+          //if at start of strip
           else
           {
+            //stop fading
             break;
           }
         }
+        //move iterator by the number of fades done (or to the start of the strip if that comes first)
+        j = ( fade > j ) ? fade : 0U;
+      }
+      //if not white, paint black ( faded colours are skipped due to iterator reset )
+      else
+      {
+        leds[ i ][ j ] = CRGB( 0, 0, 0 );
       }
     }
     if( knopfGedryckt[ i ] )
     {
-      //farbe waehlen
-      CRGB farbe;
-      unsigned short hue = 0U;
+      //if a white dot was inserted
       if( leds[ i ][ 0 ] == CRGB( 255, 255, 255 ) )
       {
-        leds[ i ][ 0 ] = farbe.setHSV( random( 255 ), c_Saturation, c_Value );
+        //choose tail colour and write
+        leds[ i ][ 0 ].setHSV( random( 255 ), c_Saturation, c_Value );
       }
+      //need to fade the first LED if it's within a tail
       else if( leds[ i ][ 0 ] != CRGB( 0, 0, 0 ) )
       {
         leds[ i ][ 0 ].fadeToBlackBy( 255 / c_FadeTail );
       }
     }
     int currentKnopf = digitalRead( i + c_ButtonOffset );
-    //zum ersten mal
+    //first time button press
     if( ( currentKnopf == HIGH ) && ( knopfGedryckt[i] == false ) )
     {
-      //merken
+      //set flag to handle one white per press
       knopfGedryckt[i] = true;
-      //weissen dot am anfang
+      //insert white dot at start
       leds[ i ][ 0 ] = CRGB( 255, 255, 255 );
     }
-    else if( currentKnopf == LOW )
+    //button was released
+    else if( ( currentKnopf == LOW )  && ( knopfGedryckt[ i ] == true ) )
     {
-      knopfGedryckt[i] = false;
+      knopfGedryckt[ i ] = false;
     }
-    //falls HIGH und gedryckt: ignorieren, da schon alles getan 
+    //if pressed and flag set, nothing needs to be done
+
+    //debug out to serial
+    if( c_WriteToSerial )
+    {
+      Serial.print( leds[ i ][ 0 ] );
+      Serial.print( "\t" );
+      //carriage return
+      if( i == ( c_Stripes - 1U ) )
+      {
+        Serial.println( "" );
+      }
+    }
   }
+  //flush buffer
   FastLED.show();
+  //wait call to slow things down in milliseconds
+  delay( c_WaitTime );
 }
