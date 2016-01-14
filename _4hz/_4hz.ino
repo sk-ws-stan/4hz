@@ -8,7 +8,10 @@ const unsigned short c_NumberOfLEDs = 100U;
 const unsigned short c_Stripes = 4U;
 const unsigned short c_Saturation = 63U;
 const unsigned short c_Value = 83U;
+//start pin for buttons
 const unsigned short c_ButtonOffset = 10U;
+//wait delay per iteration
+const unsigned long c_WaitTime = 1L;
 //debug flag
 const boolean c_WriteToSerial = false;
 //button status
@@ -55,7 +58,8 @@ void loop()
           leds[ i ][ j + 1U ] = CRGB( 255, 255, 255 );
         }
         //fade out the colour to black from one after white up to c_FadeTail LEDs behind
-        for( unsigned int fade = 0U; fade < c_FadeTail; fade++ )
+        unsigned int fade = 0U;
+        for( ; fade < c_FadeTail; fade++ )
         {
           //if not at start of strip
           if( ( j - 1U ) >= 0U )
@@ -78,17 +82,22 @@ void loop()
             break;
           }
         }
+        //move iterator by the number of fades done (or to the start of the strip if that comes first)
+        j = ( fade > j ) ? fade : 0U;
       }
-      //else non white?
+      //if not white, paint black ( faded colours are skipped due to iterator reset )
+      else
+      {
+        leds[ i ][ j ] = CRGB( 0, 0, 0 );
+      }
     }
     if( knopfGedryckt[ i ] )
     {
       //if a white dot was inserted
       if( leds[ i ][ 0 ] == CRGB( 255, 255, 255 ) )
       {
-        //choose tail coulour and write
-        CRGB colour;
-        leds[ i ][ 0 ] = colour.setHSV( random( 255 ), c_Saturation, c_Value );
+        //choose tail colour and write
+        leds[ i ][ 0 ].setHSV( random( 255 ), c_Saturation, c_Value );
       }
       //need to fade the first LED if it's within a tail
       else if( leds[ i ][ 0 ] != CRGB( 0, 0, 0 ) )
@@ -126,4 +135,6 @@ void loop()
   }
   //flush buffer
   FastLED.show();
+  //wait call to slow things down in milliseconds
+  delay( c_WaitTime );
 }
